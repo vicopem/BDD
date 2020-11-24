@@ -7,34 +7,39 @@
 
 using namespace std;
 
-void check( Truth_Table const& tt, string const& ans )
+bool check( Truth_Table const& tt, string const& ans )
 {
   cout << "  checking function correctness";
   if ( tt == Truth_Table( ans ) )
   {
     cout << "...passed." << endl;
+    return true;
   }
   else
   {
     cout << "...failed. (expect " << ans << ", but get " << tt << ")" << endl;
+    return false;
   }
 }
 
-void check( uint64_t dd_size, uint64_t expected )
+bool check( uint64_t dd_size, uint64_t expected )
 {
   cout << "  checking BDD size";
   if ( dd_size == expected )
   {
     cout << "...passed." << endl;
+    return true;
   }
   else
   {
     cout << "...failed. (expect " << expected << ", but get " << dd_size << " nodes)" << endl;
+    return false;
   }
 }
 
 int main()
 {
+  bool passed = true;
   {
     cout << "test 00: x0 XOR x1" << endl;
     BDD bdd( 2 );
@@ -44,8 +49,8 @@ int main()
     auto const tt = bdd.get_tt( f );
     //bdd.print( f );
     //cout << tt << endl;
-    check( tt, "0110" );
-    check( bdd.num_nodes( f ), 3 );
+    passed &= check( tt, "0110" );
+    passed &= check( bdd.num_nodes( f ), 3 );
   }
 
   {
@@ -57,8 +62,8 @@ int main()
     auto const tt = bdd.get_tt( f );
     //bdd.print( f );
     //cout << tt << endl;
-    check( tt, "1000" );
-    check( bdd.num_nodes( f ), 2 );
+    passed &= check( tt, "1000" );
+    passed &= check( bdd.num_nodes( f ), 2 );
   }
 
   {
@@ -71,11 +76,9 @@ int main()
     auto const tt = bdd.get_tt( f );
     //bdd.print( f );
     //cout << tt << endl;
-    check( tt, "11011000" );
-    check( bdd.num_nodes( f ), 3 );
+    passed &= check( tt, "11011000" );
+    passed &= check( bdd.num_nodes( f ), 3 );
   }
 
-  /* Feel free to add more tests. */
-
-  return 0;
+  return passed ? 0 : 1;
 }
