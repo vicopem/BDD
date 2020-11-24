@@ -54,7 +54,8 @@ private:
 
 public:
   explicit BDD( uint32_t num_vars )
-    : unique_table( num_vars )
+    : unique_table( num_vars ), num_invoke_not( 0u ), num_invoke_and( 0u ), num_invoke_or( 0u ), 
+      num_invoke_xor( 0u ), num_invoke_ite( 0u )
   {
     nodes.emplace_back( Node({num_vars, 0, 0}) ); /* constant 0 */
     nodes.emplace_back( Node({num_vars, 1, 1}) ); /* constant 1 */
@@ -128,6 +129,7 @@ public:
   index_t NOT( index_t f )
   {
     assert( f < nodes.size() && "Make sure f exists." );
+    ++num_invoke_not;
 
     /* trivial cases */
     if ( f == constant( false ) )
@@ -153,6 +155,7 @@ public:
   {
     assert( f < nodes.size() && "Make sure f exists." );
     assert( g < nodes.size() && "Make sure g exists." );
+    ++num_invoke_xor;
 
     /* trivial cases */
     if ( f == g )
@@ -217,6 +220,7 @@ public:
   {
     assert( f < nodes.size() && "Make sure f exists." );
     assert( g < nodes.size() && "Make sure g exists." );
+    ++num_invoke_and;
 
     /* trivial cases */
     if ( f == constant( false ) || g == constant( false ) )
@@ -268,12 +272,70 @@ public:
     return unique( x, r1, r0 );
   }
 
+  /* Compute f | g */
+  index_t OR( index_t f, index_t g )
+  {
+    assert( f < nodes.size() && "Make sure f exists." );
+    assert( g < nodes.size() && "Make sure g exists." );
+    ++num_invoke_or;
+
+    /* trivial cases */
+    if ( f == constant( true ) || g == constant( true ) )
+    {
+      return constant( true );
+    }
+    if ( f == constant( false ) )
+    {
+      return g;
+    }
+    if ( g == constant( false ) )
+    {
+      return f;
+    }
+    if ( f == g )
+    {
+      return f;
+    }
+
+    Node const& F = nodes[f];
+    Node const& G = nodes[g];
+    var_t x;
+    index_t f0, f1, g0, g1;
+    if ( F.v < G.v ) /* F is on top of G */
+    {
+      x = F.v;
+      f0 = F.E;
+      f1 = F.T;
+      g0 = g1 = g;
+    }
+    else if ( G.v < F.v ) /* G is on top of F */
+    {
+      x = G.v;
+      f0 = f1 = f;
+      g0 = G.E;
+      g1 = G.T;
+    }
+    else /* F and G are at the same level */
+    {
+      x = F.v;
+      f0 = F.E;
+      f1 = F.T;
+      g0 = G.E;
+      g1 = G.T;
+    }
+
+    index_t const r0 = OR( f0, g0 );
+    index_t const r1 = OR( f1, g1 );
+    return unique( x, r1, r0 );
+  }
+
   /* Compute ITE(f, g, h), i.e., f ? g : h */
   index_t ITE( index_t f, index_t g, index_t h )
   {
     assert( f < nodes.size() && "Make sure f exists." );
     assert( g < nodes.size() && "Make sure g exists." );
     assert( h < nodes.size() && "Make sure h exists." );
+    ++num_invoke_ite;
 
     /* trivial cases */
     if ( f == constant( true ) )
@@ -408,10 +470,25 @@ public:
     return ( tt_x & get_tt( fx ) ) | ( tt_nx & get_tt( fnx ) );
   }
 
-  /* Get the number of nodes in the whole package (whether used or not), excluding constants. */
+  /* Whether `f` is dead (having a reference count of 0). */
+  bool is_dead( index_t f ) const
+  {
+    /* TODO */
+    return false;
+  }
+
+  /* Get the number of living nodes in the whole package, excluding constants. */
   uint64_t num_nodes() const
   {
-    return nodes.size() - 2;
+    uint64_t n = 0u;
+    for ( auto i = 2u; i < nodes.size(); ++i )
+    {
+      if ( !is_dead( i ) )
+      {
+        ++n;
+      }
+    }
+    return n;
   }
 
   /* Get the number of nodes in the sub-graph rooted at node f, excluding constants. */
@@ -429,6 +506,11 @@ public:
     visited[1] = true;
 
     return num_nodes_rec( f, visited );
+  }
+
+  uint64_t num_invoke() const
+  {
+    return num_invoke_not + num_invoke_and + num_invoke_or + num_invoke_xor + num_invoke_ite;
   }
 
 private:
@@ -464,4 +546,7 @@ private:
   /* `unique_table` is a vector of `num_vars` maps storing the built nodes of each variable.
    * Each map maps from a pair of node indices (T, E) to a node index, if it exists.
    * See the implementation of `unique` for example usage. */
+
+  /* statistics */
+  uint64_t num_invoke_not, num_invoke_and, num_invoke_or, num_invoke_xor, num_invoke_ite;
 };
