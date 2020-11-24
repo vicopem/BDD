@@ -14,13 +14,13 @@ jobs:
       run: ./bdd
        
   build-macos:
-     runs-on: macOS-latest
+    runs-on: macOS-latest
 
-     steps:
-     - uses: actions/checkout@v1
-     - name: Make
+    steps:
+    - uses: actions/checkout@v1
+    - name: Make
       run: make
-     - name: Run
+    - name: Run
       run: ./bdd
          
   build-windows:
