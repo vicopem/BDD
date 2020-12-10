@@ -66,7 +66,7 @@ public:
     {
         assert( num_var <= 6u );
         for (unsigned i = 1; i<=bit_size; i+=1) {
-            this->bits.emplace_back((bits>>(bit_size-i))&1);
+            this->bits.push_back((bits>>(bit_size-i))&1);
         }
     }
     
@@ -86,7 +86,7 @@ public:
         for ( auto i = 0u; i < str.size(); ++i )
         {
             assert( str[i] == '1' || str[i] == '0' );
-            bits.emplace_back(str[i] == '1');
+            bits.push_back(str[i] == '1');
         }
     }
     
@@ -134,7 +134,7 @@ inline Truth_Table operator~( Truth_Table const& tt )
 {
     std::vector<bool> opposite;
     for (auto const value : tt.bits) {
-        opposite.emplace_back(!value);
+        opposite.push_back(!value);
     }
     return Truth_Table( tt.num_var, opposite );
 }
@@ -145,7 +145,7 @@ inline Truth_Table operator|( Truth_Table const& tt1, Truth_Table const& tt2 )
     assert( tt1.num_var == tt2.num_var );
     std::vector<bool> conjunction;
     for (auto i = 0u; i<tt1.bit_size; i+=1) {
-        conjunction.emplace_back(tt1.bits[i] || tt2.bits[i]);
+        conjunction.push_back(tt1.bits[i] || tt2.bits[i]);
     }
     return Truth_Table( tt1.num_var, conjunction );
 }
@@ -156,7 +156,7 @@ inline Truth_Table operator&( Truth_Table const& tt1, Truth_Table const& tt2 )
     assert( tt1.num_var == tt2.num_var );
     std::vector<bool> conjunction;
     for (auto i = 0u; i<tt1.bit_size; i+=1) {
-        conjunction.emplace_back(tt1.bits[i] && tt2.bits[i]);
+        conjunction.push_back(tt1.bits[i] && tt2.bits[i]);
     }
     return Truth_Table( tt1.num_var, conjunction );
 }
@@ -167,7 +167,7 @@ inline Truth_Table operator^( Truth_Table const& tt1, Truth_Table const& tt2 )
     assert( tt1.num_var == tt2.num_var );
     std::vector<bool> conjunction;
     for (auto i = 0u; i<tt1.bit_size; i+=1) {
-        conjunction.emplace_back(tt1.bits[i] ^ tt2.bits[i]);
+        conjunction.push_back(tt1.bits[i] ^ tt2.bits[i]);
     }
     return Truth_Table( tt1.num_var, conjunction );
 }
@@ -196,7 +196,7 @@ inline Truth_Table Truth_Table::positive_cofactor( uint8_t const var ) const
     while (i<bit_size) {
         for (auto twice = 0u; twice < 2; twice += 1) {  // Do it twice
             for (auto j = 0u; j<step; j+=1) {
-                cofactor.emplace_back(bits[i+j]);
+                cofactor.push_back(bits[i+j]);
             }
         }
         i += 2*step;
@@ -213,7 +213,7 @@ inline Truth_Table Truth_Table::negative_cofactor( uint8_t const var ) const
     while (i<bit_size) {
         for (auto twice = 0u; twice < 2; twice += 1) {  // Do it twice
             for (auto j = 0u; j<step; j+=1) {
-                cofactor.emplace_back(bits[i+j+step]);
+                cofactor.push_back(bits[i+j+step]);
             }
         }
         i += 2*step;
@@ -249,10 +249,10 @@ inline Truth_Table create_tt_nth_var( uint8_t const num_var, uint8_t const var, 
     auto i = 0u;
     while (i<(1<<num_var)) {
         for (auto j = 0u; j<step; j+=1) {
-            cofactor.emplace_back(polarity);
+            cofactor.push_back(polarity);
         }
         for (auto j = 0u; j<step; j+=1) {
-            cofactor.emplace_back(!polarity);
+            cofactor.push_back(!polarity);
         }
         i += 2*step;
     }
